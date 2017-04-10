@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,8 @@ namespace FastGaussianBlurTest
         }
         Graphics GF;
         int iSize = 500;
-        int R = 3;
+        int R = 7;
+        PrivateBitmap Source = new PrivateBitmap("D:\\1.png");
         // source channel, target channel, width, height, radius
         int[] gaussBlur(int[] scl, int w, int h, int r)
         {
@@ -66,7 +68,7 @@ namespace FastGaussianBlurTest
                             count++;
                         }
                     }
-                   Output[x, y] = Color.FromArgb(255, (int)RC / 90, (int)GC / 90, (int)BC / 90);
+                   Output[x, y] = Color.FromArgb(255, (int)RC / 200, (int)GC / 200, (int)BC / 200);
 
                 }
             return Output;
@@ -76,8 +78,8 @@ namespace FastGaussianBlurTest
         {
             panel3.Refresh();
             GF = panel3.CreateGraphics();
-            label2.Text = "正在渲染原图";
             label2.Refresh();
+            /*
             for (int i = 0; i < iSize; i++)
             {
                 for (int ii = 0; ii < iSize; ii++)
@@ -87,6 +89,8 @@ namespace FastGaussianBlurTest
                 label2.Text = "正在渲染原图......" + (Single)i/iSize * 100 + "%";
                 label2.Refresh();
             }
+            */
+            GF.DrawImage(Source.ImgData, new PointF(0, 0));
             return 1;
             
         }
@@ -94,8 +98,8 @@ namespace FastGaussianBlurTest
         {
             panel4.Refresh();
             GF = panel4.CreateGraphics();
-            label2.Text = "正在渲染处理后的图像";
             label2.Refresh();
+            /*
             for (int i = 0; i < iSize; i++)
             {
                 for (int ii = 0; ii < iSize; ii++)
@@ -105,6 +109,9 @@ namespace FastGaussianBlurTest
                 label2.Text = "正在渲染处理后的图像......" + (Single)i / iSize * 100 + "%";
                 label2.Refresh();
             }
+            */
+            GF.DrawImage(Source.ImgData,new PointF(0,0));
+
             return 1;
 
         }
@@ -121,7 +128,7 @@ int[] tcl = gaussBlur(scl, 10, 10, 1);
 scl[1] = 1 + 100;
 
 */
-            label3.Text = "类高斯模糊算法测试         模糊半径:"+ R +"                     点击开始          ";
+            label3.Text = "类高斯模糊算法测试                         像素点数量:250000 像素"+"          模糊半径:"+ R +" 像素";
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -132,29 +139,36 @@ scl[1] = 1 + 100;
         private void label3_Click(object sender, EventArgs e)
         {
             int count = 50;
-            Image T1 = Bitmap.FromFile("D:\\1.png");
-            Bitmap TT = new Bitmap(T1);
             Random Ran = new Random();
             Color[,] Test = new Color[iSize, iSize];
             Color[,] TestO = new Color[Test.GetLength(0), Test.GetLength(1)];
+            Source.LockBits();
             for (int i = 0; i < Test.GetLength(0); i++)
                 for (int ii = 0; ii < Test.GetLength(1); ii++)
                 {
                     //TestO[i, ii] = Color.FromArgb(Ran.Next(1, 254), Ran.Next(1, 254), Ran.Next(1, 254));
-                    Test[i, ii] = TT.GetPixel(i, ii);
+                    Test[i, ii] = Source.GetPixel(i, ii);
                     //Test[i, ii] = Color.FromArgb(count+= +Ran.Next(1, 50), count+ Ran.Next(1, 50), count + Ran.Next(1, 50));
                     if (count >= 154) count = 1;
                 }
-            
-
+            Source.UnLockBits();
+            ImgDrawBefore(Test);
+            Source.LockBits();
+            DateTime DTS2;
             DateTime DTS = DateTime.Now;
             DTS = DateTime.Now;
-            TestO = myGaussBlur(Test, 5);
-            //label3.Text += "   算法耗时："+ (DateTime.Now-DTS).ToString();
+            TestO = myGaussBlur(Test, R);
+            DTS2 = DateTime.Now;
+            label2.Text = "算法耗时："+ (DTS2-DTS).TotalSeconds.ToString()+ "(秒/s)";
+            for (int i = 0; i < TestO.GetLength(0); i++)
+                for (int ii = 0; ii < TestO.GetLength(1); ii++)
+                {
+                    Source.SetPixel(i, ii, TestO[i, ii]);
+                }
+            Source.UnLockBits();
+            //Source.LockBits();
             label3.Refresh();
-            ImgDrawBefore(Test);
             ImgDrawAfter(TestO);
-            label2.Text = "渲染完成";
             label2.Refresh();
         }
     }
